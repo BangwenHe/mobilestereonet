@@ -27,7 +27,7 @@ args = parser.parse_args()
 # dataset, dataloader
 StereoDataset = __datasets__[args.dataset]
 test_dataset = StereoDataset(args.datapath, args.testlist, False)
-TestImgLoader = DataLoader(test_dataset, 1, shuffle=False, num_workers=4, drop_last=False)
+TestImgLoader = DataLoader(test_dataset, 1, shuffle=False, num_workers=0, drop_last=False)
 
 # model, optimizer
 model = __models__[args.model](args.maxdisp)
@@ -57,9 +57,13 @@ def test(args):
 
             assert len(disp_est.shape) == 2
 
-            disp_est = np.array(disp_est[top_pad:, :-right_pad], dtype=np.float32)
+            if top_pad > 0 and right_pad > 0:
+                disp_est = np.array(disp_est[top_pad:, :-right_pad], dtype=np.float32)
             name = fn.split('/')
-            fn = os.path.join("predictions", '_'.join(name[2:]))
+            if len(name) > 2:
+                fn = os.path.join("predictions", '_'.join(name[2:]))
+            else:
+                fn = os.path.join("predictions", '_'.join(name))
 
             if float(args.colored) == 1:
                 disp_est = kitti_colormap(disp_est)

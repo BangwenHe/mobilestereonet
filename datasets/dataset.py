@@ -17,7 +17,7 @@ class SceneFlowDataset(Dataset):
         splits = [line.split() for line in lines]
         left_images = [x[0] for x in splits]
         right_images = [x[1] for x in splits]
-        disp_images = [x[2] for x in splits]
+        disp_images = [x[2] for x in splits if len(x) > 2]
         return left_images, right_images, disp_images
 
     def load_image(self, filename):
@@ -34,9 +34,13 @@ class SceneFlowDataset(Dataset):
     def __getitem__(self, index):
         left_img = self.load_image(os.path.join(self.datapath, self.left_filenames[index]))
         right_img = self.load_image(os.path.join(self.datapath, self.right_filenames[index]))
-        disparity = self.load_disp(os.path.join(self.datapath, self.disp_filenames[index]))
+        if self.disp_filenames:
+            disparity = self.load_disp(os.path.join(self.datapath, self.disp_filenames[index]))
+        else:
+            disparity = None
 
         if self.training:
+            assert disparity != None
             w, h = left_img.size
             crop_w, crop_h = 512, 256
 
@@ -62,18 +66,24 @@ class SceneFlowDataset(Dataset):
 
             left_img = left_img.crop((w - crop_w, h - crop_h, w, h))
             right_img = right_img.crop((w - crop_w, h - crop_h, w, h))
-            disparity = disparity[h - crop_h:h, w - crop_w: w]
+
+            if disparity:
+                disparity = disparity[h - crop_h:h, w - crop_w: w]
 
             processed = get_transform()
             left_img = processed(left_img)
             right_img = processed(right_img)
 
-            return {"left": left_img,
+            data= {"left": left_img,
                     "right": right_img,
-                    "disparity": disparity,
                     "top_pad": 0,
                     "right_pad": 0,
                     "left_filename": self.left_filenames[index]}
+
+            if disparity:
+                data["disparity"] = disparity
+            
+            return data
 
 
 class KITTIDataset(Dataset):
@@ -183,7 +193,7 @@ class DrivingStereoDataset(Dataset):
         splits = [line.split() for line in lines]
         left_images = [x[0] for x in splits]
         right_images = [x[1] for x in splits]
-        disp_images = [x[2] for x in splits]
+        disp_images = [x[2] for x in splits if len(x) > 2]
         return left_images, right_images, disp_images
 
     def load_image(self, filename):
@@ -200,9 +210,13 @@ class DrivingStereoDataset(Dataset):
     def __getitem__(self, index):
         left_img = self.load_image(os.path.join(self.datapath, self.left_filenames[index]))
         right_img = self.load_image(os.path.join(self.datapath, self.right_filenames[index]))
-        disparity = self.load_disp(os.path.join(self.datapath, self.disp_filenames[index]))
+        if self.disp_filenames:
+            disparity = self.load_disp(os.path.join(self.datapath, self.disp_filenames[index]))
+        else:
+            disparity = None
 
         if self.training:
+            assert disparity != None
             w, h = left_img.size  # (881, 400)
             crop_w, crop_h = 512, 256
 
@@ -229,15 +243,39 @@ class DrivingStereoDataset(Dataset):
 
             left_img = left_img.crop((w - crop_w, h - crop_h, w, h))
             right_img = right_img.crop((w - crop_w, h - crop_h, w, h))
-            disparity = disparity[h - crop_h:h, w - crop_w: w]
+            if disparity:
+                disparity = disparity[h - crop_h:h, w - crop_w: w]
 
             processed = get_transform()
             left_img = processed(left_img)
             right_img = processed(right_img)
 
-            return {"left": left_img,
+            data= {"left": left_img,
                     "right": right_img,
-                    "disparity": disparity,
                     "top_pad": 0,
                     "right_pad": 0,
                     "left_filename": self.left_filenames[index]}
+
+            if disparity:
+                data["disparity"] = disparity
+            
+            return data
+
+
+class MobiDepthDataset(KITTIDataset):
+    def __getitem__(self, index):
+        assert self.training is False
+        left_img = self.load_image(os.path.join(self.datapath, self.left_filenames[index]))
+        right_img = self.load_image(os.path.join(self.datapath, self.right_filenames[index]))
+        
+        # normalize
+        processed = get_transform()
+        left_img = processed(left_img).numpy()
+        right_img = processed(right_img).numpy()
+
+        return {"left": left_img,
+                "right": right_img,
+                "top_pad": 0,
+                "right_pad": 0,
+                "left_filename": self.left_filenames[index],
+                "right_filename": self.right_filenames[index]}
