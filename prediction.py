@@ -20,6 +20,7 @@ parser.add_argument('--datapath', required=True, help='data path')
 parser.add_argument('--testlist', required=True, help='testing list')
 parser.add_argument('--loadckpt', required=True, help='load the weights from a specific checkpoint')
 parser.add_argument('--colored', default=1, help='save colored or save for benchmark submission')
+parser.add_argument('--write_pfm', action='store_true', help='save raw disparity to pfm file for futher postprocessing')
 
 # parse arguments
 args = parser.parse_args()
@@ -64,6 +65,9 @@ def test(args):
                 fn = os.path.join("predictions", '_'.join(name[2:]))
             else:
                 fn = os.path.join("predictions", '_'.join(name))
+
+            if args.write_pfm:
+                write_pfm(fn.replace(".png", ".pfm"), disp_est)
 
             if float(args.colored) == 1:
                 disp_est = kitti_colormap(disp_est)
