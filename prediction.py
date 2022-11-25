@@ -17,6 +17,7 @@ parser.add_argument('--model', default='MSNet2D', help='select a model structure
 parser.add_argument('--maxdisp', type=int, default=192, help='maximum disparity')
 parser.add_argument('--dataset', help='dataset name', choices=__datasets__.keys())
 parser.add_argument('--datapath', required=True, help='data path')
+parser.add_argument('--savepath', default='prediction', help='save path for result files')
 parser.add_argument('--testlist', required=True, help='testing list')
 parser.add_argument('--loadckpt', required=True, help='load the weights from a specific checkpoint')
 parser.add_argument('--colored', default=1, help='save colored or save for benchmark submission')
@@ -44,7 +45,7 @@ model.load_state_dict(state_dict['model'])
 def test(args):
     print("Generating the disparity maps...")
 
-    os.makedirs('./predictions', exist_ok=True)
+    os.makedirs(args.savepath, exist_ok=True)
 
     for batch_idx, sample in enumerate(TestImgLoader):
 
@@ -62,9 +63,9 @@ def test(args):
                 disp_est = np.array(disp_est[top_pad:, :-right_pad], dtype=np.float32)
             name = fn.split('/')
             if len(name) > 2:
-                fn = os.path.join("predictions", '_'.join(name[2:]))
+                fn = os.path.join(args.savepath, '_'.join(name[2:]))
             else:
-                fn = os.path.join("predictions", '_'.join(name))
+                fn = os.path.join(args.savepath, '_'.join(name))
 
             if args.write_pfm:
                 write_pfm(fn.replace(".png", ".pfm"), disp_est)
