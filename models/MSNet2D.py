@@ -205,5 +205,8 @@ class MSNet2D(nn.Module):
             cost3 = torch.squeeze(cost3, 1)
             pred3 = F.softmax(cost3, dim=1)
             pred3 = disparity_regression(pred3, self.maxdisp)
+            # disp_values = torch.arange(0, self.maxdisp, dtype=pred3.dtype, device=pred3.device)
+            # disp_values = disp_values.view(1, self.maxdisp, 1, 1)
+            # return torch.sum(pred3 * disp_values, 1, keepdim=False)
 
             return [pred3]

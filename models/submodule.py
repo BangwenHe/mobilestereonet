@@ -235,8 +235,12 @@ class feature_extraction(nn.Module):
 def interweave_tensors(refimg_fea, targetimg_fea):
     B, C, H, W = refimg_fea.shape
     interwoven_features = refimg_fea.new_zeros([B, 2 * C, H, W])
-    interwoven_features[:,::2,:,:] = refimg_fea
-    interwoven_features[:,1::2,:,:] = targetimg_fea
+    # interwoven_features[:,::2,:,:] = refimg_fea
+    # interwoven_features[:,1::2,:,:] = targetimg_fea
+    slice1 = torch.arange(0, 2*C, 2)
+    slice2 = torch.arange(1, 2*C, 2)
+    interwoven_features[:,slice1,:,:] = refimg_fea
+    interwoven_features[:,slice2,:,:] = targetimg_fea
     interwoven_features = interwoven_features.contiguous()
     return interwoven_features
 
